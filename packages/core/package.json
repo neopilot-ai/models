@@ -1,0 +1,15 @@
+{
+  "name": "neopilot-models",
+  "version": "0.0.0",
+  "$schema": "https://json.schemastore.org/package.json",
+  "type": "module",
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "main": "./src/index.ts",
+  "devDependencies": {
+    "@tsconfig/bun": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:"
+  }
+}

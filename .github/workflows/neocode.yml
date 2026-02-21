@@ -1,0 +1,27 @@
+name: neocode
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  neocode:
+    if: |
+      contains(github.event.comment.body, ' /nc') ||
+      startsWith(github.event.comment.body, '/nc') ||
+      contains(github.event.comment.body, ' /neocode') ||
+      startsWith(github.event.comment.body, '/neocode')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run neocode
+        uses: neopilot-ai/neocode/github@latest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          model: anthropic/claude-sonnet-4-20250514

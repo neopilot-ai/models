@@ -1,0 +1,5 @@
+name = "NeoCode Zen"
+env = ["NEOCODE_API_KEY"]
+npm = "@ai-sdk/openai-compatible"
+api = "https://neocode.ai/zen/v1"
+doc = "https://neocode.ai/docs/zen"

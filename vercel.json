@@ -1,0 +1,37 @@
+{
+    "version": 2,
+    "public": true,
+    "buildCommand": "bun run build",
+    "installCommand": "bun install",
+    "outputDirectory": "packages/web/dist",
+    "rewrites": [
+        {
+            "source": "/api.json",
+            "destination": "/_api.json"
+        },
+        {
+            "source": "/logos/:provider.svg",
+            "destination": "/logos/:provider.svg"
+        },
+        {
+            "source": "/model-schema.json",
+            "destination": "/model-schema.json"
+        },
+        {
+            "source": "/",
+            "destination": "/_index.html"
+        },
+        {
+            "source": "/index.html",
+            "destination": "/_index.html"
+        },
+        {
+            "source": "/index",
+            "destination": "/_index.html"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/_index.html"
+        }
+    ]
+}

@@ -1,0 +1,5 @@
+name = "ZenMux"
+env = ["ZENMUX_API_KEY"]
+npm = "@ai-sdk/anthropic"
+api = "https://zenmux.ai/api/anthropic/v1"
+doc = "https://docs.zenmux.ai"

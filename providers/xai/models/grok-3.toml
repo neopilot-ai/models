@@ -1,22 +1,21 @@
 name = "Grok 3"
 family = "grok"
-release_date = "2025-02-17"
-last_updated = "2025-02-17"
 attachment = false
 reasoning = false
+tool_call = true
 temperature = true
 knowledge = "2024-11"
-tool_call = true
+release_date = "2025-02-17"
+last_updated = "2026-02-22"
 open_weights = false
 
 [cost]
-input = 3.00
-output = 15.00
-cache_read = 0.75
+input = 3
+output = 15
 
 [limit]
 context = 131_072
-output = 8_192
+output = 131_072
 
 [modalities]
 input = ["text"]

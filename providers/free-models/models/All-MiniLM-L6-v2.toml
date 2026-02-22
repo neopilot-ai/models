@@ -1,0 +1,21 @@
+name = "All-MiniLM-L6-v2"
+family = "embedding"
+release_date = "2022-08-16"
+last_updated = "2022-08-16"
+attachment = false
+reasoning = false
+temperature = false
+tool_call = false
+open_weights = true
+
+[cost]
+input = 0
+output = 0
+
+[limit]
+context = 256
+output = 384
+
+[modalities]
+input = ["text"]
+output = ["embedding"]

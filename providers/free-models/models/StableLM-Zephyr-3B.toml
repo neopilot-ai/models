@@ -1,0 +1,21 @@
+name = "StableLM-Zephyr-3B"
+family = "stablelm"
+release_date = "2024-01-09"
+last_updated = "2024-01-09"
+attachment = false
+reasoning = false
+temperature = true
+tool_call = true
+open_weights = true
+
+[cost]
+input = 0
+output = 0
+
+[limit]
+context = 8_192
+output = 4_096
+
+[modalities]
+input = ["text"]
+output = ["text"]

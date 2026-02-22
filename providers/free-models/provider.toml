@@ -1,0 +1,5 @@
+name = "Free Models"
+env = []
+npm = "@ai-sdk/openai-compatible"
+doc = "https://huggingface.co"
+api = "https://api-inference.huggingface.co/models"

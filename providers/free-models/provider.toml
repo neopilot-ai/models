@@ -1,5 +1,5 @@
 name = "Free Models"
-env = []
+env = ["HUGGINGFACE_API_KEY"]
 npm = "@ai-sdk/openai-compatible"
 doc = "https://huggingface.co"
 api = "https://api-inference.huggingface.co/models"

@@ -1,5 +1,5 @@
 name = "Orca-2-13B"
-family = "orca"
+family = "llama"
 release_date = "2023-11-14"
 last_updated = "2023-11-14"
 attachment = false

@@ -1,5 +1,5 @@
 name = "Bloom-176B"
-family = "bloom"
+family = "allenai"
 release_date = "2022-07-12"
 last_updated = "2022-07-12"
 attachment = false

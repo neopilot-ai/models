@@ -1,5 +1,5 @@
 name = "Starcoder2-15B-Instruct"
-family = "starcoder"
+family = "hermes"
 release_date = "2024-06-04"
 last_updated = "2024-06-04"
 attachment = false

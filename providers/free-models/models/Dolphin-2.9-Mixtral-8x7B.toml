@@ -1,5 +1,5 @@
 name = "Dolphin-2.9-Mixtral-8x7B"
-family = "dolphin"
+family = "mixtral"
 release_date = "2024-01-08"
 last_updated = "2024-01-08"
 attachment = false

@@ -1,5 +1,5 @@
 name = "OLMo-7B-Instruct"
-family = "olmo"
+family = "allenai"
 release_date = "2024-02-26"
 last_updated = "2024-02-26"
 attachment = false

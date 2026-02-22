@@ -1,5 +1,5 @@
 name = "MPT-30B-Instruct"
-family = "mpt"
+family = "llama"
 release_date = "2023-05-05"
 last_updated = "2023-05-05"
 attachment = false

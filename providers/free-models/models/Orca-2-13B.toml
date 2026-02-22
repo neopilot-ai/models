@@ -1,0 +1,21 @@
+name = "Orca-2-13B"
+family = "llama"
+release_date = "2023-11-14"
+last_updated = "2023-11-14"
+attachment = false
+reasoning = true
+temperature = true
+tool_call = false
+open_weights = true
+
+[cost]
+input = 0
+output = 0
+
+[limit]
+context = 4_096
+output = 4_096
+
+[modalities]
+input = ["text"]
+output = ["text"]

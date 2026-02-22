@@ -1,5 +1,4 @@
 name = "Qwen3 32B"
-family = "qwen"
 release_date = "2025-04-28"
 last_updated = "2025-04-28"
 attachment = false

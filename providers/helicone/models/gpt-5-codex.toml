@@ -1,5 +1,4 @@
 name = "OpenAI: GPT-5 Codex"
-family = "gpt-codex"
 release_date = "2025-01-01"
 last_updated = "2025-01-01"
 attachment = false

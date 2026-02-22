@@ -1,5 +1,4 @@
 name = "Google Gemma 2"
-family = "gemma"
 release_date = "2024-06-25"
 last_updated = "2024-06-25"
 attachment = false

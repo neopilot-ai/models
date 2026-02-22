@@ -1,5 +1,5 @@
 name = "all-MiniLM-L12-v2"
-family = "embedding"
+family = "text-embedding"
 release_date = "2023-02-16"
 last_updated = "2023-02-16"
 attachment = false
@@ -18,4 +18,4 @@ output = 384
 
 [modalities]
 input = ["text"]
-output = ["embedding"]
+output = ["text"]

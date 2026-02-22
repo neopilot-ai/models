@@ -1,21 +1,22 @@
 name = "Qwen3 Coder Plus"
 family = "qwen"
-release_date = "2025-07-23"
-last_updated = "2025-07-23"
 attachment = false
 reasoning = false
+tool_call = true
 temperature = true
 knowledge = "2025-04"
-tool_call = true
+release_date = "2025-07-23"
+last_updated = "2026-02-22"
 open_weights = true
 
 [cost]
-input = 1.0
-output = 5.0
+input = 1
+output = 5
+cache_read = 0.19999999999999998
 
 [limit]
 context = 1_000_000
-output = 1_000_000
+output = 65_536
 
 [modalities]
 input = ["text"]

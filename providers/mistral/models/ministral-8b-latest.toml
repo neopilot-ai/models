@@ -1,21 +1,21 @@
 name = "Ministral 8B"
 family = "ministral"
-release_date = "2024-10-01"
-last_updated = "2024-10-04"
 attachment = false
 reasoning = false
+tool_call = true
 temperature = true
 knowledge = "2024-10"
-tool_call = true
+release_date = "2024-10-01"
+last_updated = "2026-02-22"
 open_weights = true
 
 [cost]
-input = 0.10
-output = 0.10
+input = 0.09999999999999999
+output = 0.09999999999999999
 
 [limit]
 context = 128_000
-output = 128_000
+output = 4_000
 
 [modalities]
 input = ["text"]

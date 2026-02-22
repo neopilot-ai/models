@@ -1,24 +1,23 @@
 name = "Grok 4 Fast (Non-Reasoning)"
 family = "grok"
-release_date = "2025-09-19"
-last_updated = "2025-09-19"
 attachment = true
 reasoning = false
+tool_call = true
 temperature = true
 knowledge = "2025-07"
-tool_call = true
+release_date = "2025-09-19"
+last_updated = "2026-02-22"
 open_weights = false
 
 [cost]
-input = 0.20
-output = 0.50
-cache_read = 0.05
+input = 0.19999999999999998
+output = 0.5
+cache_read = 0.049999999999999996
 
 [limit]
 context = 2_000_000
-output = 30_000
+output = 256_000
 
 [modalities]
-input = ["text", "image"]
+input = ["text"]
 output = ["text"]
-

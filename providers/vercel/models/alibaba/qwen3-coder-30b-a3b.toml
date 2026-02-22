@@ -1,21 +1,21 @@
 name = "Qwen 3 Coder 30B A3B Instruct"
 family = "qwen"
-release_date = "2025-04"
-last_updated = "2025-04"
 attachment = false
 reasoning = true
-temperature = true
 tool_call = true
-open_weights = false
+temperature = true
 knowledge = "2025-04"
+release_date = "2025-04-01"
+last_updated = "2026-02-22"
+open_weights = false
 
 [cost]
 input = 0.07
 output = 0.27
 
 [limit]
-context = 160000
-output = 32768
+context = 160_000
+output = 32_768
 
 [modalities]
 input = ["text"]

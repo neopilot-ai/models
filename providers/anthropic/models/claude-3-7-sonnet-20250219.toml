@@ -1,18 +1,18 @@
 name = "Claude Sonnet 3.7"
 family = "claude-sonnet"
-release_date = "2025-02-19"
-last_updated = "2025-02-19"
 attachment = true
 reasoning = true
-temperature = true
 tool_call = true
+temperature = true
 knowledge = "2024-10-31"
+release_date = "2024-01-25"
+last_updated = "2026-02-22"
 open_weights = false
 
 [cost]
-input = 3.00
-output = 15.00
-cache_read = 0.30
+input = 3
+output = 15
+cache_read = 0.3
 cache_write = 3.75
 
 [limit]

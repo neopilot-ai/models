@@ -106,15 +106,25 @@ function sortTable(column: number, direction: "asc" | "desc") {
   });
   rows.forEach((row) => tbody.appendChild(row));
 
-  // update sort indicators
+  // update sort indicators with animation
   const headers = document.querySelectorAll("th.sortable");
   headers.forEach((header, i) => {
     const indicator = header.querySelector(".sort-indicator")!;
 
     if (i === column) {
       indicator.textContent = direction === "asc" ? "↑" : "↓";
+      // Add subtle animation
+      indicator.style.opacity = "0";
+      setTimeout(() => {
+        indicator.style.transition = "opacity 0.2s ease";
+        indicator.style.opacity = "1";
+      }, 0);
     } else {
-      indicator.textContent = "";
+      indicator.style.transition = "opacity 0.2s ease";
+      indicator.style.opacity = "0";
+      setTimeout(() => {
+        indicator.textContent = "";
+      }, 200);
     }
   });
 }
@@ -158,7 +168,20 @@ function filterTable(value: string) {
     );
     const isVisible = lowerCaseValues.length === 0 ||
       lowerCaseValues.some((lowerCaseValue) => cellTexts.some((text) => text.includes(lowerCaseValue)));
-    row.style.display = isVisible ? "" : "none";
+    
+    if (isVisible) {
+      row.style.display = "";
+      row.style.opacity = "1";
+    } else {
+      row.style.transition = "opacity 0.15s ease";
+      row.style.opacity = "0.3";
+      row.style.pointerEvents = "none";
+      setTimeout(() => {
+        if (row.style.opacity === "0.3") {
+          row.style.display = "none";
+        }
+      }, 150);
+    }
   });
 
   updateQueryParams({ search: value || null });
@@ -193,6 +216,9 @@ search.addEventListener("keydown", (e) => {
     if (navigator.clipboard) {
       await navigator.clipboard.writeText(modelId);
 
+      // Add visual feedback
+      button.classList.add("copied");
+
       // Switch to check icon
       const copyIcon = button.querySelector(".copy-icon") as HTMLElement;
       const checkIcon = button.querySelector(".check-icon") as HTMLElement;
@@ -200,11 +226,12 @@ search.addEventListener("keydown", (e) => {
       copyIcon.style.display = "none";
       checkIcon.style.display = "block";
 
-      // Switch back after 1 second
+      // Switch back after 2 seconds
       setTimeout(() => {
         copyIcon.style.display = "block";
         checkIcon.style.display = "none";
-      }, 1000);
+        button.classList.remove("copied");
+      }, 2000);
     }
   } catch (err) {
     console.error("Failed to copy text: ", err);

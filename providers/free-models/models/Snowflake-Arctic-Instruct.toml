@@ -1,0 +1,21 @@
+name = "Snowflake-Arctic-Instruct"
+family = "arctic"
+release_date = "2024-04-24"
+last_updated = "2024-04-24"
+attachment = false
+reasoning = false
+temperature = true
+tool_call = true
+open_weights = true
+
+[cost]
+input = 0
+output = 0
+
+[limit]
+context = 4_096
+output = 4_096
+
+[modalities]
+input = ["text"]
+output = ["text"]

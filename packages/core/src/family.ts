@@ -368,6 +368,18 @@ export const ModelFamilyValues = [
 
   // Writer
   "palmyra",
+
+  // Stability AI StableLM
+  "stablelm",
+
+  // Vicuna
+  "vicuna",
+
+  // Databricks DBRX
+  "dbrx",
+
+  // Snowflake Arctic
+  "arctic",
 ] as const;
 
 export const ModelFamily = z.enum(ModelFamilyValues);

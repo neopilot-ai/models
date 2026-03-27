@@ -1,4 +1,4 @@
-use crate::models::{Database, Provider, Model, Cost, Limit, Modalities, Modality, Interleaved, InterleavedField, ProviderInfo, ModelStatus};
+use crate::models::{Database, Provider, Model, Cost, Limit, Modalities, Interleaved, InterleavedField, ProviderInfo, ModelStatus};
 use crate::error::{Error, Result};
 use std::collections::HashMap;
 use std::fs;
@@ -6,9 +6,9 @@ use std::path::Path;
 use std::sync::Arc;
 use dashmap::DashMap;
 use rayon::prelude::*;
-use tracing::{info, warn, debug};
+use serde::{Deserialize, Serialize};
+use tracing::{info, debug};
 use regex::Regex;
-use chrono::{DateTime, Utc, NaiveDate};
 
 lazy_static::lazy_static! {
     static ref DATE_REGEX: Regex = Regex::new(r"^\d{4}-\d{2}(-\d{2})?$").unwrap();
@@ -90,7 +90,7 @@ impl Parser {
         let content = fs::read_to_string(&provider_toml_path)
             .map_err(|e| Error::IoError(format!("Failed to read provider.toml: {}", e)))?;
 
-        let mut provider: ProviderData = toml::from_str(&content)
+        let provider: ProviderData = toml::from_str(&content)
             .map_err(|e| Error::TomlParse(format!("Failed to parse provider.toml: {}", e)))?;
 
         // Validate provider
@@ -153,7 +153,7 @@ impl Parser {
     }
 
     fn parse_model(&self, model_path: &Path) -> Result<Model> {
-        let model_id = model_path
+        let _model_id = model_path
             .file_stem()
             .and_then(|name| name.to_str())
             .ok_or_else(|| Error::InvalidPath("Invalid model file name".to_string()))?;

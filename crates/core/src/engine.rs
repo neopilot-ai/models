@@ -85,7 +85,7 @@ impl Engine {
         let mut settings = SchemaSettings::openapi3();
         settings.inline_subschemas = true;
         
-        let mut gen = SchemaGenerator::new(settings);
+        let gen = SchemaGenerator::new(settings);
         let schema = gen.into_root_schema_for::<crate::models::Model>();
         
         Ok(schema)

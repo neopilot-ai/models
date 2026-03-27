@@ -54,11 +54,15 @@ const loadProviderSvg = async (providerId: string): Promise<string | null> => {
 // Create a cache of loaded SVGs at build time
 const providerLogos = new Map<string, string>();
 
-// Pre-load all provider logos
+// Pre-load all provider logos with error handling
 for (const [providerId] of Object.entries(Providers)) {
-  const svgContent = await loadProviderSvg(providerId);
-  if (svgContent) {
-    providerLogos.set(providerId, svgContent);
+  try {
+    const svgContent = await loadProviderSvg(providerId);
+    if (svgContent) {
+      providerLogos.set(providerId, svgContent);
+    }
+  } catch (error) {
+    console.warn(`Failed to load logo for provider ${providerId}:`, error);
   }
 }
 

@@ -1,4 +1,5 @@
 name = "OpenAI GPT-5.1"
+family = "gpt"
 release_date = "2025-01-01"
 last_updated = "2025-01-01"
 attachment = false
@@ -19,4 +20,4 @@ output = 128000
 
 [modalities]
 input = ["text", "image"]
-output = ["text"]
+output = ["text", "image"]

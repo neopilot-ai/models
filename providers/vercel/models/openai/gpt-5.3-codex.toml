@@ -12,10 +12,10 @@ open_weights = false
 input = 1.75
 output = 14
 cache_read = 0.175
-cache_write = 2.1875
 
 [limit]
 context = 400_000
+input = 272_000
 output = 128_000
 
 [modalities]

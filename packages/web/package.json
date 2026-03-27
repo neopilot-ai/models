@@ -6,7 +6,7 @@
     "build": "./script/build.ts"
   },
   "dependencies": {
-    "hono": "^4.8.0",
+    "hono": "^4.12.9",
     "neopilot-models": "workspace:*"
   },
   "devDependencies": {

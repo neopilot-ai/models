@@ -1,0 +1,26 @@
+[package]
+name = "neopilot-models-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI tools for Neopilot Models database"
+
+[[bin]]
+name = "neopilot-models"
+path = "src/main.rs"
+
+[dependencies]
+neopilot-models-core = { path = "../core" }
+neopilot-models-web = { path = "../web" }
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+clap-verbosity-flag = "2.1"
+indicatif = "0.17"
+console = "0.15"

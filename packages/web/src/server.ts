@@ -1,11 +1,20 @@
 import Index from "../index.html";
 import { Rendered } from "./render";
+import { Providers } from "./render";
 import path from "path";
 
 Bun.serve({
   port: 16_000,
   routes: {
     "/": Index,
+    "/api.json": () => {
+      return new Response(JSON.stringify(Providers, null, 2), {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=300",
+        },
+      });
+    },
     "/assets/*": (req) => {
       const file = Bun.file(
         path.join(import.meta.dir, new URL(req.url).pathname)

@@ -4,7 +4,7 @@ This provider enables model management for Cloudflare AI Gateway, which acts as 
 
 ## Overview
 
-Cloudflare AI Gateway provides a compatibility layer that allows you to access models from various providers through a single endpoint. This provider automatically fetches available models from the Cloudflare API and generates TOML configuration files for use in the Neopilot Models system.
+Cloudflare AI Gateway provides a compatibility layer that allows you to access models from various providers through a single endpoint. This provider automatically fetches available models from the Cloudflare API and generates TOML configuration files for use in the models.dev system.
 
 ## Directory Structure
 
@@ -238,7 +238,7 @@ The TOML generation script automatically:
 
 ## Provider Configuration
 
-The `provider.toml` file defines how NeoCode connects to Cloudflare AI Gateway:
+The `provider.toml` file defines how OpenCode connects to Cloudflare AI Gateway:
 
 ```toml
 name = "Cloudflare AI Gateway"

@@ -1,6 +1,103 @@
+# Environment variables
 .env
-.sst
-dist
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+target/
+out/
+
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+bun.lock
+
+# Runtime and cache
+.cache/
+*.tmp
+*.temp
+
+# GitHub Pages
+.github/pages/
+_site/
+
+# IDE and editor files
 .DS_Store
-node_modules
-.vercel
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Rust specific
+Cargo.lock
+**/*.rs.bk
+*.pdb
+*.exe
+*.dll
+*.so
+*.dylib
+*.rlib
+*.d
+*.orig
+*.bk
+*.backup
+
+# Rust toolchain
+rust-toolchain.toml
+rust-toolchain
+
+# Debug and profiling
+perf.data
+perf.data.old
+flamegraph.svg
+*.prof
+
+# Test and coverage
+*.profraw
+coverage/
+lcov.info
+tarpaulin-report.html
+
+# Documentation
+/book/
+docs/build/
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.old

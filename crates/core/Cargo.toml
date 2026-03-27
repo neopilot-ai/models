@@ -1,0 +1,25 @@
+[package]
+name = "neopilot-models-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core library for Neopilot Models database"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+schemars.workspace = true
+regex.workspace = true
+chrono.workspace = true
+rayon.workspace = true
+dashmap.workspace = true
+tracing.workspace = true
+lazy_static.workspace = true
+
+[dev-dependencies]
+tokio-test = "0.4"

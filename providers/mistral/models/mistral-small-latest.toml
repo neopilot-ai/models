@@ -1,21 +1,21 @@
-name = "Mistral Small"
+name = "Mistral Small (latest)"
 family = "mistral-small"
+release_date = "2024-09-01"
+last_updated = "2024-09-04"
 attachment = false
 reasoning = false
-tool_call = true
 temperature = true
 knowledge = "2025-03"
-release_date = "2024-09-01"
-last_updated = "2026-02-22"
+tool_call = true
 open_weights = true
 
 [cost]
-input = 0.09999999999999999
-output = 0.3
+input = 0.10
+output = 0.30
 
 [limit]
-context = 32_000
-output = 4_000
+context = 128_000
+output = 16_384
 
 [modalities]
 input = ["text", "image"]

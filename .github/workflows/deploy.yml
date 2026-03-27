@@ -1,37 +1,214 @@
-name: Deploy
+name: Deploy to GitHub Pages (Rust Runtime)
 
 on:
   push:
     branches:
-      - dev
+      - main
   workflow_dispatch:
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          bun-version: latest
+          toolchain: stable
 
-      # Workaround for Pulumi version conflict:
-      # GitHub runners have Pulumi 3.212.0+ pre-installed, which removed the -root flag
-      # from pulumi-language-nodejs (see https://github.com/pulumi/pulumi/pull/21065).
-      # SST 3.17.x uses Pulumi SDK 3.210.0 which still passes -root, causing a conflict.
-      # Removing the system language plugin forces SST to use its bundled compatible version.
-      # TODO: Remove when sst supports Pulumi >3.210.0
-      - name: Fix Pulumi version conflict
-        run: sudo rm -f /usr/local/bin/pulumi-language-nodejs
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
-      - name: Install dependencies
-        run: bun install
+      - name: Build Rust web server
+        run: cargo build --release --bin neopilot-models
 
-      - run: bun sst deploy --stage=dev
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Generate static site
+        run: |
+          # Create dist directory
+          mkdir -p dist
+          
+          # Generate API JSON
+          ./target/release/neopilot-models export --output dist/api.json --pretty
+          
+          # Generate model schema
+          ./target/release/neopilot-models schema --output dist/model-schema.json
+          
+          # Copy provider logos
+          mkdir -p dist/logos
+          cp providers/logo.svg dist/logos/default.svg 2>/dev/null || true
+          find providers -name "logo.svg" -exec cp {} dist/logos/{} \; 2>/dev/null || true
+          
+          # Generate HTML with API data
+          cat > dist/index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neopilot Models - AI Model Database</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; 
+            color: #333; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 40px; 
+            padding: 40px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { font-size: 1.2rem; opacity: 0.9; }
+        .stats { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 40px;
+        }
+        .stat-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-number { font-size: 2rem; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; margin-top: 5px; }
+        .api-info { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .api-info h2 { color: #333; margin-bottom: 15px; }
+        .api-info code { 
+            background: #f4f4f4; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        .footer { text-align: center; margin-top: 40px; color: #666; }
+        .footer a { color: #667eea; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 Neopilot Models</h1>
+        <p>High-performance AI model database powered by Rust</p>
+    </div>
+
+    <div class="stats" id="stats">
+        <div class="stat-card">
+            <div class="stat-number" id="providers-count">-</div>
+            <div class="stat-label">Providers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="models-count">-</div>
+            <div class="stat-label">Models</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="families-count">-</div>
+            <div class="stat-label">Families</div>
+        </div>
+    </div>
+
+    <div class="api-info">
+        <h2>📡 API Access</h2>
+        <p>Access our comprehensive AI model database via our REST API:</p>
+        <ul style="margin: 15px 0; padding-left: 20px;">
+            <li><strong>All Models:</strong> <code>/api.json</code></li>
+            <li><strong>Model Schema:</strong> <code>/model-schema.json</code></li>
+            <li><strong>Provider Logos:</strong> <code>/logos/{provider}.svg</code></li>
+        </ul>
+        <p style="margin-top: 15px;">
+            <strong>Example:</strong> <code>curl $(location.origin)/api.json</code>
+        </p>
+    </div>
+
+    <div class="footer">
+        <p>Built with 🦀 Rust | 
+            <a href="https://github.com/neopilot-ai/models" target="_blank">GitHub</a> | 
+            <a href="https://neomodels.vercel.app" target="_blank">Live Demo</a>
+        </p>
+    </div>
+
+    <script>
+        // Load statistics
+        fetch('/api.json')
+            .then(response => response.json())
+            .then(data => {
+                const providers = Object.keys(data).length;
+                let models = 0;
+                const families = new Set();
+                
+                Object.values(data).forEach(provider => {
+                    models += Object.keys(provider.models).length;
+                    Object.values(provider.models).forEach(model => {
+                        if (model.family) families.add(model.family);
+                    });
+                });
+                
+                document.getElementById('providers-count').textContent = providers;
+                document.getElementById('models-count').textContent = models;
+                document.getElementById('families-count').textContent = families.size;
+            })
+            .catch(error => {
+                console.error('Error loading data:', error);
+                document.getElementById('providers-count').textContent = '?';
+                document.getElementById('models-count').textContent = '?';
+                document.getElementById('families-count').textContent = '?';
+            });
+    </script>
+</body>
+</html>
+EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

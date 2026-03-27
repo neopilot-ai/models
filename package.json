@@ -20,7 +20,14 @@
     "venice:generate": "bun ./packages/core/script/generate-venice.ts",
     "vercel:generate": "bun ./packages/core/script/generate-vercel.ts",
     "build": "cd packages/web && bun run build",
-    "deploy": "npx vercel --prod"
+    "deploy": "echo 'Deploy to GitHub Pages via GitHub Actions'",
+    "rust:build": "cargo build --release",
+    "rust:run": "cargo run --bin neopilot-models",
+    "rust:serve": "cargo run --bin neopilot-models -- serve",
+    "rust:validate": "cargo run --bin neopilot-models -- validate",
+    "rust:stats": "cargo run --bin neopilot-models -- stats",
+    "rust:test": "cargo test",
+    "rust:bench": "cargo bench"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20250801.0"

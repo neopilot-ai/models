@@ -4,6 +4,8 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 
+import { inferKimiFamily } from "../src/family.js";
+
 // Friendli API endpoint
 const API_ENDPOINT = "https://api.friendli.ai/serverless/v1/models";
 
@@ -48,12 +50,14 @@ const familyPatterns: [RegExp, string][] = [
   [/llama-4/i, "llama-4"],
   [/qwen3/i, "qwen3"],
   [/deepseek-r1/i, "deepseek-r1"],
-  [/exaone/i, "exaone"],
   [/glm-4/i, "glm-4"],
   [/glm-5/i, "glm"],
 ];
 
 function inferFamily(modelId: string, modelName: string): string | undefined {
+  const kimiFamily = inferKimiFamily(modelId, modelName);
+  if (kimiFamily !== undefined) return kimiFamily;
+
   for (const [pattern, family] of familyPatterns) {
     if (pattern.test(modelId) || pattern.test(modelName)) {
       return family;

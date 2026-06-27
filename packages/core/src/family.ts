@@ -14,6 +14,7 @@ export const ModelFamilyValues = [
   "gpt-mini",
   "gpt-nano",
   "gpt-oss",
+  "gpt-image",
 
   // OpenAI o-series (reasoning models)
   "o",
@@ -25,6 +26,7 @@ export const ModelFamilyValues = [
   "claude-haiku",
   "claude-sonnet",
   "claude-opus",
+  "claude-fable",
 
   // Gemini style
   "gemini",
@@ -46,16 +48,25 @@ export const ModelFamilyValues = [
 
   // Alibaba Qwen
   "qwen",
+  "qwen3.5",
+  "qwen3.6",
+  "qwen3.7-plus",
+  "qwen3.7-max",
+  "qwen-free",
 
   // DeepSeek
   "deepseek",
   "deepseek-thinking",
+  "deepseek-flash",
+  "deepseek-flash-free",
+  "deepseek-flash-think",
 
   // Microsoft Phi
   "phi",
 
   // Moonshot Kimi
   "kimi",
+  "kimi-k2",
   "kimi-free",
   "kimi-thinking",
 
@@ -73,6 +84,7 @@ export const ModelFamilyValues = [
 
   // xAI Grok
   "grok",
+  "grok-build",
   "grok-vision",
   "grok-beta",
 
@@ -90,6 +102,8 @@ export const ModelFamilyValues = [
   "command-r",
   "command-a",
   "command-light",
+  "north",
+  "north-free",
 
   // AI21 Jamba
   "jamba",
@@ -104,12 +118,17 @@ export const ModelFamilyValues = [
 
   // MiniMax
   "minimax",
-  "minimax-free",
   "minimax-m2.5",
   "minimax-m2.7",
+  "minimax-m3",
+  "minimax-m3-free",
+  "minimax-free",
 
   // Hunyuan
   "hunyuan",
+
+  // Hy
+  "Hy",
 
   // Yi
   "yi",
@@ -130,9 +149,6 @@ export const ModelFamilyValues = [
   "solar",
   "solar-mini",
   "solar-pro",
-
-  // Exaone
-  "exaone",
 
   // Step (StepFun)
   "step",
@@ -199,9 +215,19 @@ export const ModelFamilyValues = [
 
   // Mimo
   "mimo",
+  "mimo-pro",
+  "mimo-omni",
+  "mimo-v2-pro",
+  "mimo-v2-omni",
+  "mimo-v2.5-pro",
+  "mimo-v2.5",
+  "mimo-v2.5-free",
   "mimo-pro-free",
   "mimo-omni-free",
   "mimo-flash-free",
+
+  // Clarifai
+  "mm-poly",
 
   // Longcat
   "longcat",
@@ -219,6 +245,9 @@ export const ModelFamilyValues = [
 
   // Lucid
   "lucid",
+
+  // LucidQuery
+  "agi",
 
   // Intellect
   "intellect",
@@ -253,9 +282,6 @@ export const ModelFamilyValues = [
   // M2M100
   "m2m",
 
-  // MM Poly
-  "mm-poly",
-
   // IndicTrans
   "indictrans",
 
@@ -274,9 +300,15 @@ export const ModelFamilyValues = [
   // RNJ
   "rnj",
 
+  // Tecent Hy
+  "hy3",
+  "hy3-free",
+
   // Ling & Ring (InclusionAI)
   "ling",
+  "ling-flash-free",
   "ring",
+  "ring-1t-free",
 
   // Kat Coder
   "kat-coder",
@@ -378,18 +410,40 @@ export const ModelFamilyValues = [
   // Writer
   "palmyra",
 
-  // Stability AI StableLM
+  // ALLaM
+  "allam",
+
+  // Canopy Labs
+  "canopylabs",
+
+  // Groq
+  "groq",
+
+  // Elephant
+  "elephant",
+
+  // Databricks
+  "dbrx",
+
+  // Snowflake
+  "arctic",
+
+  // Stability AI
   "stablelm",
 
   // Vicuna
   "vicuna",
 
-  // Databricks DBRX
-  "dbrx",
-
-  // Snowflake Arctic
-  "arctic",
+  // Placeholder
+  "model-family",
 ] as const;
 
 export const ModelFamily = z.enum(ModelFamilyValues);
 export type ModelFamily = z.infer<typeof ModelFamily>;
+
+export function inferKimiFamily(...values: string[]): ModelFamily | undefined {
+  const target = values.join(" ").toLowerCase();
+  if (/kimi[^a-z0-9]*k2(?:[^a-z0-9]*\d+)?[^a-z0-9]*thinking/.test(target)) return "kimi-thinking";
+  if (/kimi[\s_-]*k2/.test(target)) return "kimi-k2";
+  return undefined;
+}

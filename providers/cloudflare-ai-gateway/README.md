@@ -4,7 +4,7 @@ This provider enables model management for Cloudflare AI Gateway, which acts as 
 
 ## Overview
 
-Cloudflare AI Gateway provides a compatibility layer that allows you to access models from various providers through a single endpoint. This provider automatically fetches available models from the Cloudflare API and generates TOML configuration files for use in the models.dev system.
+Cloudflare AI Gateway provides a compatibility layer that allows you to access models from various providers through a single endpoint. This provider automatically fetches available models from the Cloudflare API and generates TOML configuration files for use in theneomodels.vercel.app system.
 
 ## Directory Structure
 

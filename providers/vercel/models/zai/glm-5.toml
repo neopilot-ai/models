@@ -5,17 +5,17 @@ reasoning = true
 tool_call = true
 temperature = true
 release_date = "2026-02-12"
-last_updated = "2026-02-19"
+last_updated = "2026-06-27"
 open_weights = true
 
 [cost]
-input = 1
-output = 3.20
-cache_read = 0.20
+input = 0.95
+output = 3.15
+cache_read = 0.19999999999999998
 
 [limit]
 context = 202_800
-output = 131_072
+output = 131_100
 
 [modalities]
 input = ["text"]

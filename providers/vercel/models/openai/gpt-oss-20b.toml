@@ -1,22 +1,21 @@
 name = "GPT OSS 20B"
 family = "gpt-oss"
-release_date = "2025-08-05"
-last_updated = "2025-08-05"
 attachment = false
 reasoning = true
-temperature = true
 tool_call = true
-open_weights = true
+temperature = true
 knowledge = "2024-10"
+release_date = "2025-08-05"
+last_updated = "2026-06-27"
+open_weights = true
 
 [cost]
-input = 0.07
-output = 0.30
+input = 0.049999999999999996
+output = 0.19999999999999998
 
 [limit]
 context = 131_072
-input = 98_304
-output = 32_768
+output = 8_192
 
 [modalities]
 input = ["text"]

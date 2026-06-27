@@ -1,191 +1,402 @@
 #!/usr/bin/env bun
 
-import { generate } from "../src/generate";
-import { Model } from "../src/schema";
+import path from "node:path";
+import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { mergeDeep } from "remeda";
+import { z } from "zod";
+import { generate } from "../src/generate.js";
+import { AuthoredModel, AuthoredModelShape, Model, Provider } from "../src/schema.js";
 
-interface CostAnalysis {
-  modelId: string;
-  provider: string;
-  inputCost: number;
-  outputCost: number;
-  contextWindow: number;
-  capabilities: string[];
-  costPerMillion: number;
-  valueScore: number;
+const root = path.join(import.meta.dirname, "..", "..", "..");
+const providersPath = path.join(root, "providers");
+const modelsPath = path.join(root, "models");
+
+const LegacyExtendsModel = AuthoredModelShape
+  .partial()
+  .extend({
+    extends: z
+      .object({
+        from: z.string(),
+        omit: z.array(z.string()).optional(),
+      })
+      .strict(),
+  })
+  .strict();
+
+const diffOutput = await Bun.$`git diff --name-only HEAD -- providers`.cwd(root).text();
+const changedProviderPaths = diffOutput
+  .split("\n")
+  .filter(Boolean)
+  .filter((filePath) => /^providers\/[^/]+\/models\/.+\.toml$/.test(filePath));
+
+if (changedProviderPaths.length === 0) {
+  process.exit(0);
 }
 
-interface OptimizationRecommendation {
-  useCase: string;
-  recommended: string[];
-  alternatives: string[];
-  savings: string;
+const baselineRoot = path.join(tmpdir(), `models-dev-compare-${Date.now()}`);
+await mkdir(baselineRoot, { recursive: true });
+
+try {
+  const baselineProvidersPath = path.join(baselineRoot, "providers");
+  await cp(providersPath, baselineProvidersPath, { recursive: true });
+  const baselineModelsPath = path.join(baselineRoot, "models");
+  await cp(modelsPath, baselineModelsPath, { recursive: true });
+  await installModelNamespaceAliases(baselineModelsPath);
+
+  for (const filePath of changedProviderPaths) {
+    const tempFilePath = path.join(baselineRoot, filePath);
+    const show = Bun.spawn(["git", "show", `HEAD:${filePath}`], {
+      cwd: root,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const exitCode = await show.exited;
+    if (exitCode !== 0) {
+      await rm(tempFilePath, { force: true });
+      continue;
+    }
+
+    const contents = await new Response(show.stdout).text();
+    await mkdir(path.dirname(tempFilePath), { recursive: true });
+    await writeFile(tempFilePath, contents);
+  }
+
+  const before = await generateForComparison(baselineProvidersPath);
+  const after = await generate(providersPath);
+
+  for (const filePath of changedProviderPaths) {
+    const match = /^providers\/([^/]+)\/models\/(.+)\.toml$/.exec(filePath);
+    if (!match) continue;
+
+    const [, providerID, modelID] = match;
+    if (providerID === undefined || modelID === undefined) continue;
+    const beforeModel = before[providerID]?.models[modelID];
+    const afterModel = after[providerID]?.models[modelID];
+    const beforeJson = sortedJson(beforeModel);
+    const afterJson = sortedJson(afterModel);
+
+    if (beforeJson === afterJson) {
+      continue;
+    }
+
+    const beforeFilePath = path.join(baselineRoot, "before.json");
+    const afterFilePath = path.join(baselineRoot, "after.json");
+    await writeFile(beforeFilePath, `${beforeJson}\n`);
+    await writeFile(afterFilePath, `${afterJson}\n`);
+
+    const diff = Bun.spawn(
+      [
+        "diff",
+        "-u",
+        "-L",
+        `${filePath} (before)`,
+        "-L",
+        `${filePath} (after)`,
+        beforeFilePath,
+        afterFilePath,
+      ],
+      {
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    );
+    const output = await new Response(diff.stdout).text();
+    process.stdout.write(output);
+  }
+} finally {
+  await rm(baselineRoot, { recursive: true, force: true });
 }
 
-async function analyzeCosts(): Promise<CostAnalysis[]> {
-  const data = await generate("providers");
-  const analyses: CostAnalysis[] = [];
+async function installModelNamespaceAliases(directory: string) {
+  await copyModelAlias(
+    directory,
+    "deepseek/deepseek-r1",
+    "amazon-bedrock/deepseek.r1-v1:0",
+  );
+  await copyModelAlias(
+    directory,
+    "meta/llama-4-maverick-17b-instruct",
+    "amazon-bedrock/meta.llama4-maverick-17b-instruct-v1:0",
+  );
+  await copyModelAlias(
+    directory,
+    "meta/llama-4-scout-17b-instruct",
+    "amazon-bedrock/meta.llama4-scout-17b-instruct-v1:0",
+  );
+  await copyModelAlias(
+    directory,
+    "meta/llama-3.3-70b-instruct",
+    "llama/llama-3.3-70b-instruct",
+  );
+  await copyModelAliasWithReplacements(
+    directory,
+    "openai/gpt-5.5-pro",
+    "opencode/gpt-5.5-pro",
+    [
+      [/release_date = "2026-04-23"/, 'release_date = "2026-04-24"'],
+      [/last_updated = "2026-04-23"/, 'last_updated = "2026-04-24"'],
+      [/structured_output = true/, "structured_output = false"],
+    ],
+  );
+  await copyModelAlias(
+    directory,
+    "tencent/hy3-preview",
+    "tencent-tokenhub/hy3-preview",
+  );
+}
 
-  for (const [providerId, provider] of Object.entries(data)) {
-    for (const [modelId, model] of Object.entries(provider.models)) {
-      if (!model.cost) continue;
+async function copyModelAlias(directory: string, from: string, to: string) {
+  return copyModelAliasWithReplacements(directory, from, to, []);
+}
 
-      const capabilities: string[] = [];
-      if (model.tool_call) capabilities.push("tool_call");
-      if (model.attachment) capabilities.push("attachment");
-      if (model.reasoning) capabilities.push("reasoning");
-      if (model.structured_output) capabilities.push("structured_output");
+async function copyModelAliasWithReplacements(
+  directory: string,
+  from: string,
+  to: string,
+  replacements: Array<[RegExp, string]>,
+) {
+  const source = path.join(directory, `${from}.toml`);
+  const target = path.join(directory, `${to}.toml`);
+  if (!existsSync(source) || existsSync(target)) return;
 
-      // Calculate value score (inverse of cost + capability bonus)
-      const avgCost = (model.cost.input + model.cost.output) / 2;
-      const capabilityBonus = capabilities.length * 0.1;
-      const valueScore = 1 / (avgCost + 0.01) + capabilityBonus;
+  await mkdir(path.dirname(target), { recursive: true });
+  if (replacements.length === 0) {
+    await cp(source, target);
+    return;
+  }
 
-      analyses.push({
-        modelId: `${providerId}/${modelId}`,
-        provider: providerId,
-        inputCost: model.cost.input,
-        outputCost: model.cost.output,
-        contextWindow: model.limit.context,
-        capabilities,
-        costPerMillion: avgCost,
-        valueScore,
-      });
+  let text = await Bun.file(source).text();
+  for (const [pattern, replacement] of replacements) {
+    text = text.replace(pattern, replacement);
+  }
+  await writeFile(target, text);
+}
+
+async function generateForComparison(directory: string) {
+  for await (const file of new Bun.Glob("**/*.toml").scan({ cwd: directory })) {
+    const text = await Bun.file(path.join(directory, file)).text();
+    if (/^\[extends\]/m.test(text)) {
+      return generateLegacyExtends(directory);
     }
   }
 
-  return analyses.sort((a, b) => a.costPerMillion - b.costPerMillion);
+  return generate(directory);
 }
 
-function generateRecommendations(analyses: CostAnalysis[]): OptimizationRecommendation[] {
-  const recommendations: OptimizationRecommendation[] = [];
+async function generateLegacyExtends(directory: string) {
+  const result: Record<string, Provider> = {};
+  const pendingModels: Array<{
+    providerID: string;
+    modelID: string;
+    modelPath: string;
+    model: z.infer<typeof LegacyExtendsModel>;
+  }> = [];
 
-  // Free models
-  const freeModels = analyses.filter(a => a.costPerMillion === 0);
-  recommendations.push({
-    useCase: "Development & Testing",
-    recommended: freeModels.slice(0, 3).map(m => m.modelId),
-    alternatives: freeModels.slice(3, 6).map(m => m.modelId),
-    savings: "100% compared to paid models",
-  });
+  for await (const providerPath of new Bun.Glob("*/provider.toml").scan({
+    cwd: directory,
+    absolute: true,
+  })) {
+    const providerID = path.basename(path.dirname(providerPath));
+    const toml = await import(providerPath, { with: { type: "toml" } }).then(
+      (mod) => mod.default,
+    );
+    toml.id = providerID;
+    toml.models = {};
 
-  // Ultra-low cost (<$0.10)
-  const ultraLowCost = analyses.filter(a => a.costPerMillion > 0 && a.costPerMillion < 0.10);
-  recommendations.push({
-    useCase: "High-Volume Text Generation",
-    recommended: ultraLowCost.slice(0, 3).map(m => m.modelId),
-    alternatives: ultraLowCost.slice(3, 6).map(m => m.modelId),
-    savings: "90-95% vs premium models",
-  });
+    const provider = Provider.safeParse(toml);
+    if (!provider.success) {
+      provider.error.cause = { providerPath, toml };
+      throw provider.error;
+    }
 
-  // Best value with tool calling
-  const toolCallingModels = analyses
-    .filter(a => a.capabilities.includes("tool_call") && a.costPerMillion < 1)
-    .sort((a, b) => a.costPerMillion - b.costPerMillion);
+    const modelsPath = path.join(directory, providerID, "models");
+    for await (const modelPath of new Bun.Glob("**/*.toml").scan({
+      cwd: modelsPath,
+      absolute: true,
+      followSymlinks: true,
+    })) {
+      const modelID = path.relative(modelsPath, modelPath).slice(0, -5);
+      const toml = await import(modelPath, { with: { type: "toml" } }).then(
+        (mod) => mod.default,
+      );
+      toml.id = modelID;
 
-  recommendations.push({
-    useCase: "Agent & Tool Use",
-    recommended: toolCallingModels.slice(0, 3).map(m => m.modelId),
-    alternatives: toolCallingModels.slice(3, 6).map(m => m.modelId),
-    savings: "80-90% vs GPT-4",
-  });
+      if (toml.extends !== undefined) {
+        const model = LegacyExtendsModel.safeParse(toml);
+        if (!model.success) {
+          model.error.cause = { modelPath, toml };
+          throw model.error;
+        }
+        pendingModels.push({
+          providerID,
+          modelID,
+          modelPath,
+          model: model.data,
+        });
+        continue;
+      }
 
-  // Best for reasoning
-  const reasoningModels = analyses
-    .filter(a => a.capabilities.includes("reasoning"))
-    .sort((a, b) => a.costPerMillion - b.costPerMillion);
+      const model = AuthoredModel.safeParse(toml);
+      if (!model.success) {
+        model.error.cause = { modelPath, toml };
+        throw model.error;
+      }
+      provider.data.models[modelID] = normalizeModelCost(model.data);
+    }
 
-  recommendations.push({
-    useCase: "Complex Reasoning",
-    recommended: reasoningModels.slice(0, 2).map(m => m.modelId),
-    alternatives: reasoningModels.slice(2, 4).map(m => m.modelId),
-    savings: "70-85% vs premium reasoning models",
-  });
+    result[providerID] = provider.data;
+  }
 
-  // Best multimodal value
-  const multimodalModels = analyses
-    .filter(a => a.capabilities.includes("attachment"))
-    .sort((a, b) => a.costPerMillion - b.costPerMillion);
+  const nameToProviderID = new Map<string, string>();
+  for (const provider of Object.values(result)) {
+    const nameKey = provider.name.toLowerCase();
+    const existingID = nameToProviderID.get(nameKey);
+    if (existingID !== undefined) {
+      throw new Error(
+        `Duplicate provider name "${provider.name}" used by both "${existingID}" and "${provider.id}". Provider names must be unique.`,
+      );
+    }
+    nameToProviderID.set(nameKey, provider.id);
+  }
 
-  recommendations.push({
-    useCase: "Multimodal Tasks",
-    recommended: multimodalModels.slice(0, 3).map(m => m.modelId),
-    alternatives: multimodalModels.slice(3, 6).map(m => m.modelId),
-    savings: "60-80% vs GPT-4V",
-  });
-
-  return recommendations;
-}
-
-function printCostReport(analyses: CostAnalysis[], recommendations: OptimizationRecommendation[]) {
-  console.log("🔍 AI MODEL COST OPTIMIZATION REPORT\n");
-  console.log("=" .repeat(60));
-
-  // Top 10 cheapest models
-  console.log("\n📊 TOP 10 CHEAPEST MODELS:");
-  console.log("-".repeat(60));
-  analyses.slice(0, 10).forEach((analysis, index) => {
-    console.log(`${index + 1}. ${analysis.modelId}`);
-    console.log(`   Cost: $${analysis.costPerMillion.toFixed(3)}/M tokens`);
-    console.log(`   Context: ${analysis.contextWindow.toLocaleString()}`);
-    console.log(`   Capabilities: ${analysis.capabilities.join(", ") || "basic"}`);
-    console.log();
-  });
-
-  // Recommendations
-  console.log("\n💡 OPTIMIZATION RECOMMENDATIONS:");
-  console.log("=".repeat(60));
-  
-  recommendations.forEach(rec => {
-    console.log(`\n🎯 ${rec.useCase}:`);
-    console.log(`   Recommended: ${rec.recommended.slice(0, 2).join(", ")}`);
-    console.log(`   Alternatives: ${rec.alternatives.slice(0, 2).join(", ")}`);
-    console.log(`   💰 Savings: ${rec.savings}`);
-  });
-
-  // Cost comparison table
-  console.log("\n📈 COST COMPARISON BY TIER:");
-  console.log("=".repeat(60));
-  
-  const tiers = [
-    { name: "Free", maxCost: 0 },
-    { name: "Ultra-Low", maxCost: 0.10 },
-    { name: "Low", maxCost: 0.50 },
-    { name: "Medium", maxCost: 2.00 },
-    { name: "High", maxCost: Infinity },
-  ];
-
-  tiers.forEach(tier => {
-    const models = analyses.filter(a => a.costPerMillion > (tiers[tiers.indexOf(tier) - 1]?.maxCost || -1) && a.costPerMillion <= tier.maxCost);
-    if (models.length > 0) {
-      console.log(`\n${tier.name} ($${tiers[tiers.indexOf(tier) - 1]?.maxCost || 0} - $${tier.maxCost === Infinity ? "∞" : tier.maxCost}):`);
-      models.slice(0, 3).forEach(model => {
-        console.log(`  • ${model.modelId} - $${model.costPerMillion.toFixed(3)}/M`);
+  for (const pendingModel of pendingModels) {
+    const [providerID, ...modelParts] = pendingModel.model.extends.from.split("/");
+    const modelID = modelParts.join("/");
+    if (providerID === undefined) {
+      throw new Error(`Invalid legacy extends.from: ${pendingModel.model.extends.from}`);
+    }
+    const baseModel = result[providerID]?.models[modelID];
+    if (baseModel === undefined) {
+      throw new Error(`Unable to resolve legacy extends.from: ${pendingModel.model.extends.from}`, {
+        cause: { modelPath: pendingModel.modelPath, toml: pendingModel.model },
       });
     }
-  });
 
-  console.log("\n" + "=".repeat(60));
-  console.log("💡 Tip: Implement model routing to automatically select");
-  console.log("   the cheapest model that meets your requirements.");
+    const { extends: extendsConfig, ...overrides } = pendingModel.model;
+    const { reasoning_options: _reasoningOptions, ...inherited } = baseModel;
+    const merged: Record<string, unknown> = structuredClone(
+      mergeDeep(inherited, overrides),
+    );
+    applyOmit(merged, extendsConfig.omit ?? []);
+
+    const model = Model.safeParse(normalizeCost(merged));
+    if (!model.success) {
+      model.error.cause = { modelPath: pendingModel.modelPath, toml: merged };
+      throw model.error;
+    }
+
+    result[pendingModel.providerID]!.models[pendingModel.modelID] = model.data;
+  }
+
+  return result;
 }
 
-async function main() {
-  try {
-    console.log("🔍 Analyzing model costs across all providers...\n");
-    
-    const analyses = await analyzeCosts();
-    const recommendations = generateRecommendations(analyses);
-    
-    printCostReport(analyses, recommendations);
-    
-    console.log(`\n✅ Analysis complete: ${analyses.length} models analyzed`);
-    
-  } catch (error) {
-    console.error("❌ Error analyzing costs:", error);
-    process.exit(1);
+function normalizeModelCost(model: z.infer<typeof AuthoredModel>): Model {
+  return normalizeCost(model) as Model;
+}
+
+function normalizeCost(model: Record<string, unknown>) {
+  const cost = model.cost;
+  if (cost === undefined || cost === null || typeof cost !== "object" || Array.isArray(cost)) {
+    return model;
+  }
+
+  const tiers = (cost as { tiers?: unknown }).tiers;
+  if (!Array.isArray(tiers) || tiers.length !== 1) {
+    return model;
+  }
+
+  const contextOver200k = tiers.find((tier) => {
+    if (tier === null || typeof tier !== "object" || Array.isArray(tier)) return false;
+    const tierConfig = (tier as { tier?: unknown }).tier;
+    if (tierConfig === null || typeof tierConfig !== "object" || Array.isArray(tierConfig)) return false;
+    const type = (tierConfig as { type?: unknown }).type;
+    const size = (tierConfig as { size?: unknown }).size;
+    return (
+      (type === undefined || type === "context") &&
+      typeof size === "number" &&
+      size >= 200_000
+    );
+  });
+
+  if (contextOver200k === undefined) {
+    return model;
+  }
+
+  const { tier: _tier, ...legacyCost } = contextOver200k as Record<string, unknown>;
+  return {
+    ...model,
+    cost: {
+      ...(cost as Record<string, unknown>),
+      context_over_200k: legacyCost,
+    },
+  };
+}
+
+function applyOmit(target: Record<string, unknown>, paths: string[]) {
+  omitLoop: for (const omit of paths) {
+    const parts = omit.split(".");
+    const parents: Array<{
+      value: Record<string, unknown>;
+      key: string;
+    }> = [];
+    let current = target;
+
+    for (const part of parts.slice(0, -1)) {
+      const next = current[part];
+      if (
+        next === undefined ||
+        next === null ||
+        typeof next !== "object" ||
+        Array.isArray(next)
+      ) {
+        continue omitLoop;
+      }
+      parents.push({ value: current, key: part });
+      current = next as Record<string, unknown>;
+    }
+
+    const lastPart = parts.at(-1);
+    if (lastPart === undefined || !(lastPart in current)) {
+      continue;
+    }
+
+    delete current[lastPart];
+
+    for (let index = parents.length - 1; index >= 0; index--) {
+      const parent = parents[index];
+      if (parent === undefined) continue;
+      const value = parent.value[parent.key];
+      if (
+        value === null ||
+        value === undefined ||
+        typeof value !== "object" ||
+        Array.isArray(value) ||
+        Object.keys(value).length > 0
+      ) {
+        break;
+      }
+      delete parent.value[parent.key];
+    }
   }
 }
 
-if (import.meta.main) {
-  main();
+function sortedJson(value: unknown) {
+  return JSON.stringify(sortJson(value), null, 2);
+}
+
+function sortJson(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sortJson);
+  }
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, item]) => [key, sortJson(item)]),
+    );
+  }
+  return value;
 }

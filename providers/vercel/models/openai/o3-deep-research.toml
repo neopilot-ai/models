@@ -1,13 +1,13 @@
 name = "o3-deep-research"
 family = "o"
-release_date = "2024-06-26"
-last_updated = "2024-06-26"
 attachment = true
 reasoning = true
-temperature = false
 tool_call = true
-open_weights = false
+temperature = true
 knowledge = "2024-10"
+release_date = "2025-06-26"
+last_updated = "2026-06-27"
+open_weights = false
 
 [cost]
 input = 10
@@ -15,9 +15,8 @@ output = 40
 cache_read = 2.5
 
 [limit]
-context = 200000
-input = 100_000
-output = 100000
+context = 200_000
+output = 100_000
 
 [modalities]
 input = ["text", "image", "pdf"]

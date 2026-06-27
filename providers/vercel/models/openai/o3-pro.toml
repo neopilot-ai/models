@@ -1,22 +1,21 @@
 name = "o3 Pro"
 family = "o-pro"
-release_date = "2025-04-16"
-last_updated = "2025-04-16"
 attachment = true
 reasoning = true
-temperature = false
 tool_call = true
-open_weights = false
+temperature = true
 knowledge = "2024-10"
+release_date = "2025-06-10"
+last_updated = "2026-06-27"
+open_weights = false
 
 [cost]
 input = 20
 output = 80
 
 [limit]
-context = 200000
-input = 100_000
-output = 100000
+context = 200_000
+output = 100_000
 
 [modalities]
 input = ["text", "image", "pdf"]

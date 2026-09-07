@@ -1,9 +1,8 @@
 #!/usr/bin/env bun
 
-import { Rendered, Providers } from "../src/render";
+import { RenderedPages, Providers, Models } from "../src/render";
 import fs from "fs/promises";
 import path from "path";
-import { $ } from "bun";
 
 await fs.rm("./dist", { recursive: true, force: true });
 await Bun.build({
@@ -41,31 +40,49 @@ for (const entry of entries) {
   }
 }
 
-let html = await Bun.file("./dist/index.html").text();
-html = html.replace("<!--static-->", Rendered);
-await Bun.write("./dist/index.html", html);
-await Bun.write("./dist/api.json", JSON.stringify(Providers));
+// Copy lab logos to dist/logos/labs/
+await fs.mkdir("./dist/logos/labs", { recursive: true });
 
-const modelIds: string[] = [];
-for (const [providerId, provider] of Object.entries(Providers)) {
-  for (const modelId of Object.keys(provider.models)) {
-    modelIds.push(`${providerId}/${modelId}`);
+const labsDir = "../../labs";
+try {
+  const labEntries = await fs.readdir(labsDir, { withFileTypes: true });
+  for (const entry of labEntries) {
+    if (entry.isDirectory()) {
+      const lab = entry.name;
+      const logoPath = path.join(labsDir, lab, "logo.svg");
+      const logoFile = Bun.file(logoPath);
+
+      if (await logoFile.exists()) {
+        await Bun.write(`./dist/logos/labs/${lab}.svg`, logoFile);
+      }
+    }
+  }
+} catch (error) {
+  if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+    throw error;
   }
 }
 
-const schema = {
-  $schema: "https://json-schema.org/draft/2020-12/schema",
-  $id: `https://${process.env.VERCEL_URL || "neomodels.vercel.app"}/model-schema.json`,
-  $defs: {
-    Model: {
-      type: "string",
-      enum: modelIds.sort(),
-      description: "AI model identifier in provider/model format",
-    },
-  },
-};
+const template = await Bun.file("./dist/index.html").text();
 
-await Bun.write("./dist/model-schema.json", JSON.stringify(schema, null, 2));
+for (const [route, rendered] of RenderedPages) {
+  const filePath = route === "/"
+    ? "./dist/_index.html"
+    : path.join("./dist", route, "index.html");
 
-await $`mv ./dist/index.html ./dist/_index.html`;
-await $`mv ./dist/api.json ./dist/_api.json`;
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await Bun.write(filePath, template.replace("<!--static-->", rendered));
+}
+
+await Bun.write("./dist/api.json", JSON.stringify(Providers));
+await Bun.write(
+  "./dist/catalog.json",
+  JSON.stringify({ models: Models, providers: Providers }),
+);
+await Bun.write("./dist/models.json", JSON.stringify(Models));
+
+await fs.rename("./dist/api.json", "./dist/_api.json");
+await fs.rename("./dist/catalog.json", "./dist/_catalog.json");
+await fs.rename("./dist/models.json", "./dist/_models.json");
+
+await fs.rm("./dist/index.html", { force: true });

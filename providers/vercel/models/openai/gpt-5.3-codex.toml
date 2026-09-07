@@ -4,8 +4,8 @@ attachment = true
 reasoning = true
 tool_call = true
 temperature = true
-release_date = "2026-02-24"
-last_updated = "2026-02-24"
+release_date = "2026-02-05"
+last_updated = "2026-06-27"
 open_weights = false
 
 [cost]
@@ -15,7 +15,6 @@ cache_read = 0.175
 
 [limit]
 context = 400_000
-input = 272_000
 output = 128_000
 
 [modalities]

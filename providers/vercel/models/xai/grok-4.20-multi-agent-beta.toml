@@ -5,12 +5,12 @@ reasoning = true
 tool_call = true
 temperature = true
 release_date = "2026-03-11"
-last_updated = "2026-03-13"
+last_updated = "2026-06-27"
 open_weights = false
 
 [cost]
-input = 2
-output = 6
+input = 1.25
+output = 2.5
 cache_read = 0.19999999999999998
 
 [limit]
@@ -18,5 +18,5 @@ context = 2_000_000
 output = 2_000_000
 
 [modalities]
-input = ["text"]
+input = ["text", "image", "pdf"]
 output = ["text"]

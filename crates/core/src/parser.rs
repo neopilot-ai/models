@@ -176,6 +176,26 @@ impl Parser {
         // Set the model ID
         model_data.id = full_model_id.to_string();
 
+        // Normalize cost: convert tiers to context_over_200k for legacy compatibility
+        if let Some(ref mut cost) = model_data.cost {
+            if let Some(ref tiers) = cost.tiers {
+                // Find first tier with context size >= 200K
+                if let Some(tier) = tiers.iter().find(|t| t.tier.size >= 200_000) {
+                    cost.context_over_200k = Some(Box::new(Cost {
+                        input: tier.input,
+                        output: tier.output,
+                        reasoning: tier.reasoning,
+                        cache_read: tier.cache_read,
+                        cache_write: tier.cache_write,
+                        input_audio: tier.input_audio,
+                        output_audio: tier.output_audio,
+                        context_over_200k: None,
+                        tiers: None,
+                    }));
+                }
+            }
+        }
+
         // Validate model
         self.validate_model(&model_data)?;
 

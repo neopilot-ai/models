@@ -1,0 +1,22 @@
+name = "Step 3.7 Flash"
+family = "step"
+attachment = true
+reasoning = true
+tool_call = true
+temperature = true
+release_date = "2026-05-28"
+last_updated = "2026-06-27"
+open_weights = false
+
+[cost]
+input = 0.19999999999999998
+output = 1.15
+cache_read = 0.04
+
+[limit]
+context = 256_000
+output = 256_000
+
+[modalities]
+input = ["text", "image"]
+output = ["text"]

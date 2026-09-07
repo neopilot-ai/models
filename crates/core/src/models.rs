@@ -19,6 +19,25 @@ pub struct Modalities {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct CostTier {
+    pub input: f64,
+    pub output: f64,
+    pub reasoning: Option<f64>,
+    pub cache_read: Option<f64>,
+    pub cache_write: Option<f64>,
+    pub input_audio: Option<f64>,
+    pub output_audio: Option<f64>,
+    pub tier: Tier,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct Tier {
+    #[serde(rename = "type")]
+    pub type_: Option<String>,
+    pub size: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Cost {
     pub input: f64,
     pub output: f64,
@@ -29,6 +48,7 @@ pub struct Cost {
     pub output_audio: Option<f64>,
     #[serde(rename = "context_over_200k")]
     pub context_over_200k: Option<Box<Cost>>,
+    pub tiers: Option<Vec<CostTier>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

@@ -15,12 +15,7 @@ import { ModelFamilyValues } from "../src/family.js";
 
 const API_ENDPOINT = "https://ai-gateway.vercel.sh/v1/models";
 
-enum ModelType {
-  Language = "language",
-  Embedding = "embedding",
-  Image = "image",
-  Video = "video",
-}
+const ModelType = z.string();
 
 enum SkipZeroFields {
   LimitContext = "limit.context",
@@ -49,9 +44,9 @@ const VercelModel = z.object({
   name: z.string(),
   created: z.number(),
   released: z.number().optional(),
-  context_window: z.number(),
-  max_tokens: z.number(),
-  type: z.nativeEnum(ModelType),
+  context_window: z.number().optional(),
+  max_tokens: z.number().optional(),
+  type: ModelType,
   tags: z.array(z.string()).optional().default([]),
   pricing: Pricing.optional(),
 }).passthrough();
@@ -257,8 +252,8 @@ function mergeModel(
     ? timestampToDate(apiModel.released)
     : (existing?.release_date ?? getTodayDate());
 
-  // Preserve existing limits if API returns 0 (indicates missing/invalid data)
-  const contextLimit = apiModel.context_window > 0
+  // Preserve existing limits if API returns 0 or undefined (indicates missing/invalid data)
+  const contextLimit = (apiModel.context_window ?? 0) > 0
     ? apiModel.context_window
     : (existing?.limit?.context ?? 0);
   const outputLimit = apiModel.max_tokens > 0
@@ -493,8 +488,8 @@ async function main() {
   let unchanged = 0;
 
   for (const apiModel of apiModels) {
-    // Skip these since NeoCode does not support image / video generation yet
-    if (apiModel.type === ModelType.Image || apiModel.type === ModelType.Video) {
+    // Skip non-language models (NeoCode does not support these yet)
+    if (apiModel.type !== "language") {
       continue;
     }
 

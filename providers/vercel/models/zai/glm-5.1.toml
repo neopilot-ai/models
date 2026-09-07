@@ -1,0 +1,22 @@
+name = "GLM 5.1"
+family = "glm"
+attachment = false
+reasoning = true
+tool_call = true
+temperature = true
+release_date = "2026-04-07"
+last_updated = "2026-06-27"
+open_weights = false
+
+[cost]
+input = 1.3
+output = 4.300000000000001
+cache_read = 0.26
+
+[limit]
+context = 202_000
+output = 202_000
+
+[modalities]
+input = ["text"]
+output = ["text"]

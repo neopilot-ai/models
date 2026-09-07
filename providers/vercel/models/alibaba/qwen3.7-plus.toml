@@ -1,0 +1,23 @@
+name = "Qwen 3.7 Plus"
+family = "qwen3.7-plus"
+attachment = true
+reasoning = true
+tool_call = true
+temperature = true
+release_date = "2026-06-02"
+last_updated = "2026-06-27"
+open_weights = false
+
+[cost]
+input = 0.39999999999999997
+output = 1.5999999999999999
+cache_read = 0.08
+cache_write = 0.5
+
+[limit]
+context = 1_000_000
+output = 64_000
+
+[modalities]
+input = ["text", "image", "pdf"]
+output = ["text"]
